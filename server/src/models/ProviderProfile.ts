@@ -9,6 +9,7 @@ export interface IServiceItem {
 
 export interface IProviderProfile extends Document {
   userId: mongoose.Types.ObjectId;
+  username?: string;
   businessName: string;
   tagline: string;
   category: string;
@@ -50,6 +51,7 @@ const ServiceItemSchema = new Schema({
 const ProviderProfileSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    username: { type: String, trim: true, lowercase: true, index: true },
     businessName: { type: String, required: true, trim: true },
     tagline: { type: String, default: '' },
     category: { type: String, required: true, index: true },

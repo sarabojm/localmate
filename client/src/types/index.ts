@@ -25,6 +25,7 @@ export interface ServiceItem {
 export interface ProviderProfile {
   _id: string;
   userId: string | User;
+  username?: string;
   businessName: string;
   tagline: string;
   category: string; // e.g. "Electrician", "AC Mechanic", "Cleaning", "Plumber"

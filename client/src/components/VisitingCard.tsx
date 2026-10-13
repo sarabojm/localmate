@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   Phone,
   MessageCircle,
@@ -8,6 +9,7 @@ import {
   Clock,
   Heart,
   Lock,
+  ExternalLink,
 } from 'lucide-react';
 import { ProviderProfile } from '../types';
 import { useAppDispatch, useAppSelector } from '../store';
@@ -119,6 +121,15 @@ export const VisitingCard: React.FC<VisitingCardProps> = ({
             <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">
               {provider.businessName}
             </h3>
+            <Link
+              to={`/provider/${provider.username || provider._id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5"
+              title="Open Visiting Card Page"
+            >
+              <span>Card</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
           </div>
           
           <p className="text-xs text-slate-500 font-medium line-clamp-1 mt-0.5">
@@ -126,7 +137,7 @@ export const VisitingCard: React.FC<VisitingCardProps> = ({
           </p>
 
           {/* Ratings & Experience Row */}
-          <div className="flex items-center gap-3 mt-3 text-xs text-slate-600">
+          <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-slate-600">
             <div className="flex items-center gap-1 font-bold text-amber-500 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md">
               <Star className="w-3.5 h-3.5 fill-amber-400" />
               <span>{provider.rating.toFixed(1)}</span>

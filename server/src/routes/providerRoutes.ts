@@ -4,6 +4,7 @@ import {
   getProviderById,
   getMyProviderProfile,
   updateProviderProfile,
+  updateProviderAvatar,
   toggleAvailability,
   recordContactClick,
 } from '../controllers/providerController';
@@ -14,6 +15,7 @@ const router = Router();
 router.get('/', getAllProviders);
 router.get('/me', protect, authorize('provider'), getMyProviderProfile);
 router.put('/me', protect, authorize('provider'), updateProviderProfile);
+router.patch('/me/avatar', protect, authorize('provider'), updateProviderAvatar);
 router.patch('/me/availability', protect, authorize('provider'), toggleAvailability);
 router.post('/:id/call-click', recordContactClick);
 router.get('/:id', getProviderById);

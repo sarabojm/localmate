@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   X,
   Phone,
@@ -13,6 +14,7 @@ import {
   Lock,
   Loader2,
   Briefcase,
+  ExternalLink,
 } from 'lucide-react';
 import { ProviderProfile, Review } from '../types';
 import { useAppDispatch, useAppSelector } from '../store';
@@ -151,6 +153,14 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                   }`}
                 />
               </button>
+              <Link
+                to={`/provider/${provider.username || provider._id}`}
+                onClick={onClose}
+                className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md text-white transition-colors"
+                title="Open Dedicated Visiting Card Page"
+              >
+                <ExternalLink className="w-5 h-5" />
+              </Link>
               <button
                 onClick={onClose}
                 className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md text-white transition-colors"

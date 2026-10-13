@@ -59,9 +59,16 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     // If registered as a provider, create their initial provider profile / visiting card
     if (user.role === 'provider') {
+      const bName = businessName || `${name}'s Services`;
+      const baseSlug = (bName || name)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
       await ProviderProfile.create({
         userId: user._id,
-        businessName: businessName || `${name}'s Services`,
+        username: baseSlug,
+        businessName: bName,
         tagline: `Professional ${category || 'Service'} Specialist`,
         category: category || 'Electrician',
         phone: phone || '',

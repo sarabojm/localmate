@@ -25,6 +25,7 @@ import { ExplorePage } from './pages/ExplorePage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { ProviderDashboardPage } from './pages/ProviderDashboardPage';
 import { CustomerDashboardPage } from './pages/CustomerDashboardPage';
+import { ProviderVisitingCardPage } from './pages/ProviderVisitingCardPage';
 
 export function App() {
   const dispatch = useAppDispatch();
@@ -173,6 +174,14 @@ export function App() {
             element={
               <ProviderDashboardPage
                 onSelectProvider={handleSelectProvider}
+                onContactProvider={handleContactProvider}
+              />
+            }
+          />
+          <Route
+            path="/provider/:username"
+            element={
+              <ProviderVisitingCardPage
                 onContactProvider={handleContactProvider}
               />
             }

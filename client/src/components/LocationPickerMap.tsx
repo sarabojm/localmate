@@ -109,9 +109,9 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   };
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-slate-200">
+    <div className="isolate relative rounded-2xl overflow-hidden border border-slate-200">
       <div ref={mapContainerRef} style={{ height, width: '100%' }} />
-      <div className="absolute top-2 right-2 z-[400]">
+      <div className="absolute top-2 right-2 z-[10]">
         <button
           type="button"
           onClick={handleUseCurrentLocation}
@@ -121,7 +121,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
           <span>My Current GPS</span>
         </button>
       </div>
-      <div className="absolute bottom-2 left-2 z-[400] bg-black/60 backdrop-blur-md text-white text-[10px] font-medium px-2 py-1 rounded-lg">
+      <div className="absolute bottom-2 left-2 z-[10] bg-black/60 backdrop-blur-md text-white text-[10px] font-medium px-2 py-1 rounded-lg">
         Click or drag pin to set shop location
       </div>
     </div>

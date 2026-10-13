@@ -246,6 +246,7 @@ const seedDatabase = async () => {
 
       const profile = await ProviderProfile.create({
         userId: user._id,
+        username: (p as any).username || p.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
         businessName: p.businessName,
         tagline: p.tagline,
         category: p.category,

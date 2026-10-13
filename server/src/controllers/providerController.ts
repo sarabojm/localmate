@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import ProviderProfile from '../models/ProviderProfile';
+import User from '../models/User';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 export const getAllProviders = async (req: Request, res: Response): Promise<void> => {
@@ -75,7 +77,40 @@ export const getAllProviders = async (req: Request, res: Response): Promise<void
 
 export const getProviderById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const provider = await ProviderProfile.findById(req.params.id).populate('userId', 'name email avatar');
+    const id = String(req.params.id || '').trim();
+    if (!id) {
+      res.status(400).json({ message: 'Provider ID or username is required' });
+      return;
+    }
+    let provider: any = null;
+
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      provider = await ProviderProfile.findById(id).populate('userId', 'name email avatar');
+    }
+
+    if (!provider) {
+      const cleanSlug = id.toLowerCase().trim();
+      const slugWords = cleanSlug.replace(/[-_]+/g, ' ');
+
+      provider = await ProviderProfile.findOne({
+        $or: [
+          { username: cleanSlug },
+          { businessName: new RegExp(`^${cleanSlug.replace(/[-_]/g, '[-_ ]?')}$`, 'i') },
+          { businessName: new RegExp(`^${slugWords}$`, 'i') },
+        ],
+      }).populate('userId', 'name email avatar');
+    }
+
+    if (!provider) {
+      // Regex fallback matching businessName or username
+      const regex = new RegExp(id.replace(/[-_]+/g, '.*'), 'i');
+      provider = await ProviderProfile.findOne({
+        $or: [
+          { username: regex },
+          { businessName: regex },
+        ],
+      }).populate('userId', 'name email avatar');
+    }
 
     if (!provider) {
       res.status(404).json({ message: 'Provider profile not found' });
@@ -124,6 +159,7 @@ export const updateProviderProfile = async (req: AuthRequest, res: Response): Pr
 
     const updatableFields = [
       'businessName',
+      'username',
       'tagline',
       'category',
       'experienceYears',
@@ -151,9 +187,42 @@ export const updateProviderProfile = async (req: AuthRequest, res: Response): Pr
 
     await profile.save();
 
+    if (req.body.avatarUrl) {
+      await User.findByIdAndUpdate(req.user._id, { avatar: req.body.avatarUrl });
+    }
+
     res.json({ success: true, data: profile });
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Server error updating profile' });
+  }
+};
+
+export const updateProviderAvatar = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Not authenticated' });
+      return;
+    }
+    const { avatarUrl } = req.body;
+    if (!avatarUrl) {
+      res.status(400).json({ message: 'Avatar image URL or data is required' });
+      return;
+    }
+
+    const profile = await ProviderProfile.findOne({ userId: req.user._id });
+    if (!profile) {
+      res.status(404).json({ message: 'Provider profile not found' });
+      return;
+    }
+
+    profile.avatarUrl = avatarUrl;
+    await profile.save();
+
+    await User.findByIdAndUpdate(req.user._id, { avatar: avatarUrl });
+
+    res.json({ success: true, data: profile, avatarUrl });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message || 'Server error updating avatar' });
   }
 };
 

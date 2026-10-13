@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
   PhoneCall,
@@ -34,11 +35,13 @@ import {
   ArrowRight,
   Zap,
   Loader2,
+  Camera,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store';
 import { setCredentials, logout } from '../store/slices/authSlice';
 import { updateProviderAvailability, setProviders } from '../store/slices/providerSlice';
 import { VisitingCard } from '../components/VisitingCard';
+import { UpdateAvatarModal } from '../components/UpdateAvatarModal';
 import { ProviderProfile, ServiceItem, Coordinates } from '../types';
 import { CATEGORIES } from '../data/mockData';
 import { LocationPickerMap } from '../components/LocationPickerMap';
@@ -125,6 +128,10 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     ]
   );
 
+  // Avatar state & modal
+  const [avatarUrl, setAvatarUrl] = useState<string>(currentProvider?.avatarUrl || '');
+  const [showAvatarModal, setShowAvatarModal] = useState<boolean>(false);
+
   // Form input additions
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
@@ -159,6 +166,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
             setIsAvailable(p.isAvailable ?? true);
             setLocation(p.location || CITY_COORDINATES.Bangalore);
             setServices(p.services || []);
+            if (p.avatarUrl) setAvatarUrl(p.avatarUrl);
           }
         })
         .catch((err) => {
@@ -449,7 +457,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     phone,
     whatsapp,
     about,
-    avatarUrl: generateAvatarUrl(businessName, category),
+    avatarUrl: avatarUrl || currentProvider?.avatarUrl || generateAvatarUrl(businessName, category),
     coverUrl: currentProvider?.coverUrl,
     isVerified: true,
     isAvailable,
@@ -492,6 +500,17 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
     api.patch('/providers/me/availability').catch(() => {});
   };
 
+  const handleAvatarUpdated = (newUrl: string) => {
+    setAvatarUrl(newUrl);
+    if (currentProvider) {
+      dispatch(
+        setProviders(
+          providers.map((p) => (p._id === currentProvider._id ? { ...p, avatarUrl: newUrl } : p))
+        )
+      );
+    }
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingProfile(true);
@@ -510,6 +529,7 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
         workingType,
         workingHours,
         about,
+        avatarUrl: avatarUrl || currentProvider?.avatarUrl,
         services,
         isAvailable,
         location,
@@ -525,7 +545,9 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
   };
 
   const handleCopyCardLink = () => {
-    const link = `${window.location.origin}/explore?search=${encodeURIComponent(businessName)}`;
+    const cardSlug =
+      currentProvider?.username || currentProvider?._id || encodeURIComponent(businessName);
+    const link = `${window.location.origin}/provider/${cardSlug}`;
     navigator.clipboard.writeText(link);
     setCopyToast(true);
     setTimeout(() => setCopyToast(false), 2500);
@@ -1275,6 +1297,53 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
               )}
             </div>
 
+            {/* Profile Picture Section */}
+            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/90 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="relative group shrink-0">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-md bg-white ring-2 ring-indigo-500/20">
+                    <img
+                      src={
+                        avatarUrl ||
+                        currentProvider?.avatarUrl ||
+                        generateAvatarUrl(businessName, category)
+                      }
+                      alt={businessName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAvatarModal(true)}
+                    className="absolute -bottom-1 -right-1 p-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-xs transition-transform active:scale-90"
+                    title="Change Profile Photo"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-slate-900">Visiting Card Profile Photo</h4>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      Active
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Upload your picture, workshop logo, or choose a trade badge.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowAvatarModal(true)}
+                className="shrink-0 px-3.5 py-2 rounded-xl bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-700 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs"
+              >
+                <Camera className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Update Photo</span>
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -1562,23 +1631,36 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
                 </h3>
               </div>
 
-              <button
-                type="button"
-                onClick={handleCopyCardLink}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-              >
-                {copyToast ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-emerald-600">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copy Link</span>
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  to={`/provider/${currentProvider?.username || currentProvider?._id || encodeURIComponent(businessName)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg transition-colors"
+                  title="Open Visiting Card Page in new tab"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open Page</span>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleCopyCardLink}
+                  className="text-xs font-bold text-slate-600 hover:text-slate-800 flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition-colors"
+                >
+                  {copyToast ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-600">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy Link</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Render Visiting Card */}
@@ -1863,7 +1945,9 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
               <div className="p-4 bg-white rounded-2xl shadow-md border border-slate-200">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                    `${window.location.origin}/explore?search=${encodeURIComponent(businessName)}`
+                    `${window.location.origin}/provider/${
+                      currentProvider?.username || currentProvider?._id || encodeURIComponent(businessName)
+                    }`
                   )}`}
                   alt="Visiting Card QR Code"
                   className="w-44 h-44 object-contain"
@@ -1899,6 +1983,18 @@ export const ProviderDashboardPage: React.FC<ProviderDashboardPageProps> = ({
           </div>
         </div>
       )}
+
+      {/* Update Avatar Modal */}
+      <UpdateAvatarModal
+        isOpen={showAvatarModal}
+        onClose={() => setShowAvatarModal(false)}
+        currentAvatarUrl={
+          avatarUrl || currentProvider?.avatarUrl || generateAvatarUrl(businessName, category)
+        }
+        providerName={businessName}
+        category={category}
+        onSuccess={handleAvatarUpdated}
+      />
     </div>
   );
 };
